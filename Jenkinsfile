@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        // Jenkins kubeconfig (VERY IMPORTANT)
         KUBECONFIG = "/var/lib/jenkins/.kube/config"
     }
 
@@ -12,13 +11,6 @@ pipeline {
     }
 
     stages {
-
-        stage('Checkout Code') {
-            steps {
-                echo "Cloning GitHub repository..."
-                git url: 'https://github.com/harsimar04/microservices-e-commerce-application.git'
-            }
-        }
 
         stage('Docker Build - Microservices') {
             steps {
@@ -35,9 +27,8 @@ pipeline {
 
         stage('Verify Kubernetes Access') {
             steps {
-                echo "Checking Kubernetes cluster access..."
+                echo "Checking Kubernetes access..."
                 sh '''
-                kubectl version --client
                 kubectl get nodes
                 kubectl get pods -n ecommerce
                 '''
@@ -46,7 +37,7 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                echo "Deploying manifests to Kubernetes..."
+                echo "Deploying to Kubernetes..."
                 sh '''
                 kubectl apply -f infra/k8s/
                 '''
@@ -58,13 +49,8 @@ pipeline {
         success {
             echo "✅ CI/CD Pipeline completed successfully"
         }
-
         failure {
             echo "❌ CI/CD Pipeline failed"
-        }
-
-        always {
-            echo "🧹 Pipeline finished"
         }
     }
 }
