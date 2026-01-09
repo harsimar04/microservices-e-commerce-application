@@ -1,7 +1,14 @@
+FROM gradle:8-jdk17 AS build
+WORKDIR /app
+COPY . .
+RUN gradle build -x test
 
-FROM openjdk:17-alpine
-RUN addgroup -S spring && adduser -S spring -G spring
-USER spring:spring
-ARG JAR_FILE=build/libs/cart-1.0.0.jar
-COPY ${JAR_FILE} app.jar
-ENTRYPOINT ["java","-jar","/app.jar"]
+FROM eclipse-temurin:17-jre
+WORKDIR /app
+
+# Copy ONLY the runnable jar (exclude *-plain.jar)
+COPY --from=build /app/build/libs/*[^plain].jar app.jar
+
+EXPOSE 8084
+ENTRYPOINT ["java","-jar","app.jar"]
+

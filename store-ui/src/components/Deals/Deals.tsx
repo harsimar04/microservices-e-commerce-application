@@ -1,82 +1,70 @@
-import * as React from 'react';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import CardActions from '@mui/material/CardActions';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
-import Grid from '@mui/material/Grid';
-import Chip from '@mui/material/Chip';
-import Paper from '@mui/material/Paper';
-import Link from '@mui/material/Link';
-import StarIcon from '@mui/icons-material/Star';
-import axiosClient, { productsUrl } from '../../api/config';
-import { useState, useEffect } from 'react';
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
-const Deals = () => {
-    const navigate = useNavigate();
+type Deal = {
+  id?: string;
+  _id?: string;
+  name?: string;
+  title?: string;
+  price?: number;
+};
 
-    const [deals, setDeals] = useState([])
-    const [error, setError] = useState(null)
+const Deals: React.FC = () => {
+  const [deals, setDeals] = useState<Deal[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-    const loadDeals = async () => {
-        try {
-            const response = await axiosClient.get(productsUrl + 'deals')
-            setDeals(response.data)
-            setError(null)
-        } catch (err: any) {
-            setError(err)
+  useEffect(() => {
+    const fetchDeals = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.REACT_APP_PRODUCTS_API}/deals`
+        );
+
+        const data = res.data;
+
+        // 🔒 GUARANTEE: deals is ALWAYS an array
+        if (Array.isArray(data)) {
+          setDeals(data);
+        } else if (Array.isArray(data?.data)) {
+          setDeals(data.data);
+        } else if (Array.isArray(data?.deals)) {
+          setDeals(data.deals);
+        } else {
+          setDeals([]);
         }
-    }
+      } catch (err) {
+        console.error("Failed to fetch deals", err);
+        setError("Unable to load deals");
+        setDeals([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // run on load
-    useEffect(() => {
-        loadDeals()
-    }, [])
+    fetchDeals();
+  }, []);
 
-    return (
-        <Paper elevation={3} sx={{ pl: 2, pb: 2 }}>
-            <Typography variant="h6" sx={{ p: 1, color: 'text.primary' }}>Deals of the Day</Typography>
-            <Grid container spacing={2} >
-                <>
-                    {
-                        deals.slice(0, 5).map((deal: any) => (
-                            <Grid item key={deal.dealId}>
-                                <Link component="button"
-                                    onClick={() => {
-                                        navigate('product/' + deal.variantSku)}
-                                        } underline="none">
-                                    <Card sx={{ width: 250, height: 290 }}>
-                                        <Box><img src={deal.thumbnail} height="150" alt={deal.name}></img></Box>
-                                        <CardContent sx={{ height: 50 }}>
-                                            <Grid container >
-                                                <Grid item xs={12}>
-                                                    <Typography color="text.secondary">
-                                                        {deal.shortDescription}
-                                                    </Typography>
-                                                </Grid>
-                                            </Grid>
-                                        </CardContent>
-                                        <CardActions>
-                                            <Grid container>
-                                                <Grid item xs={6} sx={{ p: 1, display: 'flex', justifyContent: 'flex-start' }}>
-                                                    <Typography variant="h6">$ {deal.price}</Typography></Grid>
-                                                <Grid item xs={6} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-                                                    <Chip icon={<StarIcon />} label={deal.rating} />
-                                                </Grid>
-                                            </Grid>
-                                        </CardActions>
-                                    </Card>
-                                </Link>
+  if (loading) return <p>Loading deals...</p>;
+  if (error) return <p>{error}</p>;
 
-                            </Grid>
+  return (
+    <div>
+      <h2>Deals</h2>
 
-                        ))
-                    }
-                </>
-            </Grid>
-        </Paper>
-    )
-}
+      {deals.length === 0 ? (
+        <p>No deals available</p>
+      ) : (
+        deals.slice(0, 4).map((deal, index) => (
+          <div key={deal.id || deal._id || index}>
+            <p>{deal.name || deal.title || "Deal"}</p>
+            {deal.price && <p>₹{deal.price}</p>}
+          </div>
+        ))
+      )}
+    </div>
+  );
+};
 
-export default Deals
+export default Deals;
+

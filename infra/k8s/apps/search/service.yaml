@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: search
+  namespace: ecommerce
+spec:
+  selector:
+    app: search
+  ports:
+    - port: 3001
+      targetPort: 3001
+

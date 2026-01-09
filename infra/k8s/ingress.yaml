@@ -1,0 +1,51 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ecommerce-ingress
+  namespace: ecommerce
+spec:
+  rules:
+    - host: ecommerce.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+
+          - path: /api/users
+            pathType: Prefix
+            backend:
+              service:
+                name: users
+                port:
+                  number: 8000
+
+          - path: /api/products
+            pathType: Prefix
+            backend:
+              service:
+                name: products
+                port:
+                  number: 3000
+
+          - path: /api/search
+            pathType: Prefix
+            backend:
+              service:
+                name: search
+                port:
+                  number: 3001
+
+          - path: /api/cart
+            pathType: Prefix
+            backend:
+              service:
+                name: cart
+                port:
+                  number: 8080
+
+
