@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        KUBECONFIG = "/var/lib/jenkins/.kube/config"
-    }
-
     options {
         timestamps()
         disableConcurrentBuilds()
@@ -12,34 +8,32 @@ pipeline {
 
     stages {
 
-        stage('Docker Build - Microservices') {
+        stage('Checkout Code') {
             steps {
-                echo "Building Docker images..."
+                echo "Checking out source code..."
+                // Jenkins already checks out code when using Pipeline from SCM
+                sh 'git status'
+            }
+        }
+
+        stage('Build Docker Images') {
+            steps {
+                echo "Building Docker images for all microservices..."
                 sh '''
-                docker build -t ecommerce-frontend ./store-ui
-                docker build -t ecommerce-users ./users-cna-microservice
-                docker build -t ecommerce-products ./products-cna-microservice
-                docker build -t ecommerce-search ./search-cna-microservice
-                docker build -t ecommerce-cart ./cart-cna-microservice
+                docker build -t ecommerce-frontend:latest ./store-ui
+                docker build -t ecommerce-users:latest ./users-cna-microservice
+                docker build -t ecommerce-products:latest ./products-cna-microservice
+                docker build -t ecommerce-search:latest ./search-cna-microservice
+                docker build -t ecommerce-cart:latest ./cart-cna-microservice
                 '''
             }
         }
 
-        stage('Verify Kubernetes Access') {
+        stage('List Built Images') {
             steps {
-                echo "Checking Kubernetes access..."
+                echo "Verifying Docker images..."
                 sh '''
-                kubectl get nodes
-                kubectl get pods -n ecommerce
-                '''
-            }
-        }
-
-        stage('Deploy to Kubernetes') {
-            steps {
-                echo "Deploying to Kubernetes..."
-                sh '''
-                kubectl apply -f infra/k8s/
+                docker images | grep ecommerce
                 '''
             }
         }
@@ -47,10 +41,15 @@ pipeline {
 
     post {
         success {
-            echo "✅ CI/CD Pipeline completed successfully"
+            echo "✅ CI pipeline completed successfully (Docker build only)"
         }
+
         failure {
-            echo "❌ CI/CD Pipeline failed"
+            echo "❌ CI pipeline failed"
+        }
+
+        always {
+            echo "🧹 Pipeline finished"
         }
     }
 }
