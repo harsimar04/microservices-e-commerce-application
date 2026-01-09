@@ -11,14 +11,13 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 echo "Checking out source code..."
-                // Jenkins already checks out code when using Pipeline from SCM
                 sh 'git status'
             }
         }
 
         stage('Build Docker Images') {
             steps {
-                echo "Building Docker images for all microservices..."
+                echo "Building Docker images..."
                 sh '''
                 docker build -t ecommerce-frontend:latest ./store-ui
                 docker build -t ecommerce-users:latest ./users-cna-microservice
@@ -29,27 +28,33 @@ pipeline {
             }
         }
 
+        stage('Trivy Security Scan') {
+            steps {
+                echo "Running Trivy vulnerability scan..."
+                sh '''
+                trivy image --severity HIGH,CRITICAL ecommerce-frontend:latest
+                trivy image --severity HIGH,CRITICAL ecommerce-users:latest
+                trivy image --severity HIGH,CRITICAL ecommerce-products:latest
+                trivy image --severity HIGH,CRITICAL ecommerce-search:latest
+                trivy image --severity HIGH,CRITICAL ecommerce-cart:latest
+                '''
+            }
+        }
+
         stage('List Built Images') {
             steps {
-                echo "Verifying Docker images..."
-                sh '''
-                docker images | grep ecommerce
-                '''
+                sh 'docker images | grep ecommerce'
             }
         }
     }
 
     post {
         success {
-            echo "✅ CI pipeline completed successfully (Docker build only)"
+            echo "✅ CI pipeline + security scan successful"
         }
 
         failure {
-            echo "❌ CI pipeline failed"
-        }
-
-        always {
-            echo "🧹 Pipeline finished"
+            echo "❌ CI or security scan failed"
         }
     }
 }
