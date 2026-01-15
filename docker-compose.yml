@@ -1,0 +1,81 @@
+version: "3.9"
+
+services:
+  # ---------------- FRONTEND ----------------
+  frontend:
+    build: ./store-ui
+    container_name: frontend
+    ports:
+      - "2000:80"
+    depends_on:
+      - users
+      - products
+      - cart
+      - search
+    restart: always
+
+  # ---------------- USERS SERVICE (Python) ----------------
+  users:
+    build: ./users-cna-microservice
+    container_name: users
+    ports:
+      - "8003:8003"
+    environment:
+      - DATABASE_URL=sqlite:///./users.db
+    restart: always
+
+  # ---------------- PRODUCTS SERVICE (Node + MongoDB) ----------------
+  products:
+    build: ./products-cna-microservice
+    container_name: products
+    ports:
+      - "3002:3001"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/ecommerce
+    depends_on:
+      - mongo
+    restart: always
+
+  # ---------------- SEARCH SERVICE (Node) ----------------
+  search:
+    build: ./search-cna-microservice
+    container_name: search
+    ports:
+      - "3003:3001"
+    restart: always
+
+  # ---------------- CART SERVICE (Java + Redis) ----------------
+  cart:
+    build: ./cart-cna-microservice
+    container_name: cart
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+    depends_on:
+      - redis
+    restart: always
+
+  # ---------------- MONGODB ----------------
+  mongo:
+    image: mongo:6
+    container_name: mongo
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo-data:/data/db
+    restart: always
+
+  # ---------------- REDIS ----------------
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6378:6379"
+    restart: always
+
+# ---------------- VOLUMES ----------------
+volumes:
+  mongo-data:
+

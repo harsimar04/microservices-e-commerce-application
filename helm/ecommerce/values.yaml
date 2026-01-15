@@ -1,0 +1,9 @@
+namespace: ecommerce
+
+frontend:
+  name: frontend
+  image: ecommerce-frontend:latest
+  replicas: 1
+  port: 80
+  serviceType: ClusterIP
+
